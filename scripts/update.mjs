@@ -118,7 +118,13 @@ async function fetchText(url) {
 export async function build({ now = new Date(), previous = null, fetcher = fetchText } = {}) {
   const season = seasonCode(now);
   let fixtureRows = null, fixturesError = null;
-  try { fixtureRows = parseCsv(await fetcher(`${BASE}/fixtures.csv`)); }
+  try {
+    const txt = await fetcher(`${BASE}/fixtures.csv`);
+    fixtureRows = parseCsv(txt);
+    const divs = {};
+    for (const r of fixtureRows) divs[r.Div] = (divs[r.Div] || 0) + 1;
+    if (process.env.DS_DEBUG !== '0') console.log(`fixtures.csv: ${txt.length} bytes, ${fixtureRows.length} γραμμές, στήλες: ${Object.keys(fixtureRows[0] || {}).slice(0, 8).join(',')}, ανά Div: ${JSON.stringify(divs)}`);
+  }
   catch (e) { fixturesError = String(e.message || e); }
 
   const leagues = [];
