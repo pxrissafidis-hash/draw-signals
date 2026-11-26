@@ -1,7 +1,7 @@
 import { DEFAULT_SETTINGS, evaluateMatch, formatProfile, fmtPct, fmtNum, fmtSigned, SIGNAL_LABEL } from './logic.js';
 
 // Σύνδεσμος για χειροκίνητη λήψη νέων δεδομένων στο GitHub (μόνο για τον ιδιοκτήτη). Συμπληρώνεται στο deploy.
-const UPDATE_URL = '';
+const UPDATE_URL = 'https://github.com/pxrissafidis-hash/draw-signals/actions/workflows/update.yml';
 const TZ = 'Europe/Athens';
 const AUTO_REFRESH_MIN = 30;
 const STALE_DAYS = 8;
