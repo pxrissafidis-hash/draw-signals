@@ -169,7 +169,7 @@ function renderLeagues(all) {
     const L = state.data.leagues.find((l) => l.code === code);
     const g = groups.get(code);
     const items = g ? g.items.sort((a, b) => String(a.f.kickoff).localeCompare(String(b.f.kickoff))) : [];
-    const body = items.length ? items.map(card).join('') : `<div class="empty">${state.onlySignals ? 'Κανένα σήμα.' : L.fixtures.length ? 'Κανένας αγώνας σε αυτή την περίοδο.' : 'Το πρόγραμμα εκκρεμεί.'}</div>`;
+    const body = items.length ? items.map(card).join('') : `<div class="empty">${state.onlySignals ? 'Κανένα σήμα.' : L.fixtures.length ? 'Κανένας αγώνας σε αυτή την περίοδο.' : 'Το πρόγραμμα και οι αποδόσεις εκκρεμούν. Η πηγή τα ανεβάζει συνήθως Παρασκευή και η εφαρμογή τα παίρνει αυτόματα.'}</div>`;
     return `<section class="league"><div class="league-head"><h2>${esc(L.flag)} ${esc(L.name)}</h2><span class="muted small">${items.length} αγώνες</span></div>${body}</section>`;
   }).join('');
   $('#leagues').innerHTML = html;
