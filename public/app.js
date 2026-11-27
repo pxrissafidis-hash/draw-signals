@@ -109,7 +109,8 @@ function render() {
       if (played.has(`${f.home}|${f.away}|${k}`)) continue; // ήδη ολοκληρωμένος
       const prior = L.results.filter((r) => !f.kickoff || !r.kickoff || r.kickoff < f.kickoff);
       const ev = evaluateMatch(f, prior, state.settings);
-      all.push({ f, ev, league: L, started: f.kickoff && new Date(f.kickoff).getTime() < now, id: `m-${L.code}-${slug(f.home)}-${slug(f.away)}` });
+      const relaxed = relaxedBy(ev, f, prior);
+      all.push({ f, ev, relaxed, league: L, started: f.kickoff && new Date(f.kickoff).getTime() < now, id: `m-${L.code}-${slug(f.home)}-${slug(f.away)}` });
     }
   }
   renderSummary(all);
@@ -118,8 +119,42 @@ function render() {
 }
 const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
+// ---------- Χαλαρωμένα όρια ----------
+// Κάθε κριτήριο και τα όρια (ρυθμίσεις) που το επηρεάζουν.
+const CRIT_KEYS = {
+  propensity: ['minGames', 'nGood', 'nBad'],
+  px: ['pxGood', 'pxMin'],
+  closeness: ['closeGood', 'closeMax'],
+  under: ['underGood', 'underMin'],
+  ev: ['evGood', 'evMin', 'wMarket', 'minGames'],
+};
+const LEVEL_RANK = { fail: 0, partial: 1, pass: 2 };
+const PCT_KEYS = new Set(['pxGood', 'pxMin', 'closeGood', 'closeMax', 'underGood', 'underMin', 'evGood', 'evMin', 'wMarket']);
+const customKeys = () => Object.keys(DEFAULT_SETTINGS).filter((k) => Number(state.settings[k]) !== DEFAULT_SETTINGS[k]);
+const fmtSetting = (k, v) => (PCT_KEYS.has(k) ? `${+(v * 100).toFixed(1)}%` : String(v));
+const settingLabel = (k) => (FIELDS.find((f) => f[0] === k) || [k, k])[1];
+
+/** Αν το σήμα υπάρχει μόνο χάρη σε χαλαρωμένα όρια, επιστρέφει ποια κριτήρια/όρια το στηρίζουν. */
+function relaxedBy(ev, f, prior) {
+  const custom = customKeys();
+  if (!custom.length) return null;
+  const base = evaluateMatch(f, prior, DEFAULT_SETTINGS);
+  if (SIGNAL_ORDER[ev.signal] >= SIGNAL_ORDER[base.signal]) return null;
+  const reasons = [];
+  for (const [crit, keys] of Object.entries(CRIT_KEYS)) {
+    const now = LEVEL_RANK[ev.crit[crit].level], was = LEVEL_RANK[base.crit[crit].level];
+    const changedKeys = keys.filter((k) => custom.includes(k));
+    if (changedKeys.length && (now ?? -1) > (was ?? -1)) {
+      reasons.push(...changedKeys.map((k) => `${settingLabel(k)} ${fmtSetting(k, state.settings[k])} (προεπιλογή ${fmtSetting(k, DEFAULT_SETTINGS[k])})`));
+    }
+  }
+  return { baseSignal: base.signal, reasons: [...new Set(reasons)] };
+}
+
 function renderStatus(d) {
   const msgs = [];
+  const custom = customKeys();
+  if (custom.length) msgs.push(`Χρησιμοποιείς προσαρμοσμένα όρια: ${custom.map((k) => `${settingLabel(k)} ${fmtSetting(k, state.settings[k])}`).join(' · ')}. Τα σήματα που υπάρχουν μόνο χάρη σε αυτά έχουν σήμανση ⚠.`);
   if (state.offline) msgs.push(d ? `Χωρίς σύνδεση. Βλέπεις τα αποθηκευμένα δεδομένα της ${fmtStamp(d.generatedAt)}.` : 'Χωρίς σύνδεση και χωρίς αποθηκευμένα δεδομένα.');
   if (d) {
     const ageDays = (Date.now() - new Date(d.generatedAt).getTime()) / 864e5;
@@ -144,7 +179,7 @@ function renderSummary(all) {
   const full = all.filter((x) => x.ev.signal === 'FULL');
   const strong = all.filter((x) => x.ev.signal === 'STRONG');
   const none = all.length - full.length - strong.length;
-  const line = (x) => `<li><a href="#${x.id}"><span class="badge ${x.ev.signal}">${SIGNAL_LABEL[x.ev.signal]}</span><span class="teams">${esc(x.f.home)} – ${esc(x.f.away)}</span><span class="muted small">${esc(x.league.name)} · ${esc(fmtKick(x.f.kickoff, x.f.hasTime))}</span></a></li>`;
+  const line = (x) => `<li><a href="#${x.id}"><span class="badge ${x.ev.signal}">${SIGNAL_LABEL[x.ev.signal]}</span>${x.relaxed ? '<span class="badge RELAXED">⚠ χαλαρωμένο όριο</span>' : ''}<span class="teams">${esc(x.f.home)} – ${esc(x.f.away)}</span><span class="muted small">${esc(x.league.name)} · ${esc(fmtKick(x.f.kickoff, x.f.hasTime))}</span></a></li>`;
   const sorted = [...full, ...strong].sort((a, b) => SIGNAL_ORDER[a.ev.signal] - SIGNAL_ORDER[b.ev.signal] || String(a.f.kickoff).localeCompare(String(b.f.kickoff)));
   $('#summary').innerHTML = `
     <h2>Σύνοψη</h2>
@@ -186,6 +221,7 @@ function card(x) {
         <div><div class="teams">${esc(f.home)} – ${esc(f.away)}</div><div class="when">${esc(fmtKick(f.kickoff, f.hasTime))}${x.started ? ' · ξεκίνησε, αναμένεται αποτέλεσμα' : ''}</div></div>
         <span class="badge ${ev.signal}">${SIGNAL_LABEL[ev.signal]}</span>
       </div>
+      ${x.relaxed ? `<div class="relaxed-note">⚠ Σήμα μόνο χάρη σε χαλαρωμένο όριο. Με τα προεπιλεγμένα όρια θα ήταν <b>${SIGNAL_LABEL[x.relaxed.baseSignal]}</b>.<br>Πατάει σε: ${x.relaxed.reasons.map(esc).join(' · ') || 'συνδυασμό αλλαγμένων ορίων'}</div>` : ''}
       <div class="kpis">
         ${kpi('Απόδοση Χ', o.d ? fmtNum(o.d) : 'εκκρεμεί', c.px.level)}
         ${kpi('No-vig P(X)', fmtPct(c.px.value), c.px.level)}
@@ -232,7 +268,7 @@ const FIELDS = [
   ['pxMin', 'No-vig P(X) κόβεται κάτω από', '', 0.01],
   ['closeGood', 'Ισορροπημένο: |P1 − P2| ≤', '', 0.01],
   ['closeMax', 'Έντονο φαβορί: |P1 − P2| >', '', 0.01],
-  ['underGood', 'Under 2.5 περνάει από', '', 0.01],
+  ['underGood', 'Under 2.5 περνάει από', 'Το πιο ασφαλές όριο για χαλάρωμα: έως 0.50', 0.01],
   ['underMin', 'Under 2.5 κόβεται κάτω από', '', 0.01],
   ['evGood', 'EV θετικό από', '', 0.01],
   ['evMin', 'EV κόβεται κάτω από', '', 0.01],
