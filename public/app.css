@@ -117,3 +117,6 @@ main { max-width: 760px; margin: 0 auto; padding: 0 16px 32px; }
 
 .badge.RELAXED { background: var(--relaxed-bg); color: var(--relaxed); }
 .relaxed-note { margin-top: 8px; padding: 8px 10px; border-radius: 8px; font-size: 13px; background: var(--relaxed-bg); color: var(--relaxed); border: 1px dashed var(--relaxed); }
+.mid li::before { content: "≈"; color: var(--pending); font-weight: 700; }
+.detail ul.plain li { padding-left: 0; }
+.detail ul.plain li::before { content: none; }

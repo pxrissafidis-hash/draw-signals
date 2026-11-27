@@ -232,20 +232,21 @@ function card(x) {
     </summary>
     <div class="detail">
       ${list('ok', 'Τι περνάει', ev.passes)}
-      ${list('cut', 'Τι κόβεται', ev.cuts)}
+      ${list('mid', 'Οριακά (περνάει με ένσταση)', ev.partials)}
+      ${list('cut', 'Τι δεν περνάει', ev.cuts)}
       ${list('pend', 'Εκκρεμεί', ev.pending)}
       <h3>Προφίλ Χ</h3>
-      <ul class="pend" style="list-style:none">
-        <li style="padding-left:0">${esc(f.home)}: ${esc(formatProfile(ph))}</li>
-        <li style="padding-left:0">${esc(f.away)}: ${esc(formatProfile(pa))}</li>
+      <ul class="plain">
+        <li>${esc(f.home)}: ${esc(formatProfile(ph))}</li>
+        <li>${esc(f.away)}: ${esc(formatProfile(pa))}</li>
       </ul>
       <h3>Υπολογισμοί</h3>
-      <ul style="list-style:none">
-        <li style="padding-left:0">1-X-2: ${esc(fmtNum(o.h))} / ${esc(fmtNum(o.d))} / ${esc(fmtNum(o.a))}${o.src1x2 ? ` (${esc(o.src1x2)})` : ''}</li>
-        <li style="padding-left:0">S = ${ev.noVig ? esc(fmtNum(ev.noVig.overround, 4)) : 'εκκρεμεί'} · γκανιότα ${ev.noVig ? esc(fmtPct(ev.noVig.overround - 1)) : 'εκκρεμεί'}</li>
-        <li style="padding-left:0">Over / Under 2.5: ${esc(fmtNum(o.over))} / ${esc(fmtNum(o.under))}${o.srcOU ? ` (${esc(o.srcOU)})` : ''}</li>
-        <li style="padding-left:0">P_est(X) = ${esc(fmtPct(c.ev.pEst))}${c.ev.note ? ` · ${esc(c.ev.note)}` : ''}</li>
-        <li style="padding-left:0">Break-even 1/O<sub>X</sub> = ${esc(fmtPct(c.ev.breakEven))}</li>
+      <ul class="plain">
+        <li>1-X-2: ${esc(fmtNum(o.h))} / ${esc(fmtNum(o.d))} / ${esc(fmtNum(o.a))}${o.src1x2 ? ` (${esc(o.src1x2)})` : ''}</li>
+        <li>S = ${ev.noVig ? esc(fmtNum(ev.noVig.overround, 4)) : 'εκκρεμεί'} · γκανιότα ${ev.noVig ? esc(fmtPct(ev.noVig.overround - 1)) : 'εκκρεμεί'}</li>
+        <li>Over / Under 2.5: ${esc(fmtNum(o.over))} / ${esc(fmtNum(o.under))}${o.srcOU ? ` (${esc(o.srcOU)})` : ''}</li>
+        <li>P_est(X) = ${esc(fmtPct(c.ev.pEst))}${c.ev.note ? ` · ${esc(c.ev.note)}` : ''}</li>
+        <li>Break-even 1/O<sub>X</sub> = ${esc(fmtPct(c.ev.breakEven))}</li>
       </ul>
     </div>
   </details>`;

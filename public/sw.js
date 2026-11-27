@@ -1,5 +1,5 @@
 // Offline λειτουργία: το app ανοίγει χωρίς ίντερνετ με τα τελευταία δεδομένα.
-const CACHE = 'draw-signals-v2';
+const CACHE = 'draw-signals-v3';
 const SHELL = ['./', 'index.html', 'app.css', 'theme.css', 'app.js', 'logic.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

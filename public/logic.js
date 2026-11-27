@@ -86,7 +86,7 @@ export function evaluateMatch(fixture, results, settings = DEFAULT_SETTINGS) {
   const pa = teamDrawProfile(fixture.away, results, s);
 
   const crit = {};
-  const passes = [], cuts = [], pending = [];
+  const passes = [], partials = [], cuts = [], pending = [];
 
   // 1. Προφίλ Χ
   {
@@ -100,7 +100,7 @@ export function evaluateMatch(fixture, results, settings = DEFAULT_SETTINGS) {
     const txt = `Προφίλ Χ: ${fixture.home} ${formatProfile(ph)} · ${fixture.away} ${formatProfile(pa)}`;
     if (level === PASS) passes.push(txt + ' (και οι δύο με συχνό Χ)');
     else if (level === FAIL) cuts.push(txt + ' (σπάνιο Χ)');
-    else if (level === PARTIAL) cuts.push(txt + ' (μικτό / μέτριο προφίλ)');
+    else if (level === PARTIAL) partials.push(txt + ' (μικτό / μέτριο προφίλ)');
     else pending.push(txt);
   }
 
@@ -112,7 +112,7 @@ export function evaluateMatch(fixture, results, settings = DEFAULT_SETTINGS) {
     const level = m.px >= s.pxGood ? PASS : m.px >= s.pxMin ? PARTIAL : FAIL;
     crit.px = { level, value: m.px, overround: m.overround };
     const txt = `No-vig P(X) ${fmtPct(m.px)}`;
-    (level === PASS ? passes : cuts).push(txt + (level === PASS ? '' : level === PARTIAL ? ' (οριακή)' : ' (χαμηλή)'));
+    (level === PASS ? passes : level === PARTIAL ? partials : cuts).push(txt + (level === PASS ? '' : level === PARTIAL ? ' (οριακή)' : ' (χαμηλή)'));
   }
 
   // 3. Closeness
@@ -123,7 +123,7 @@ export function evaluateMatch(fixture, results, settings = DEFAULT_SETTINGS) {
     crit.closeness = { level, value: d, p1: m.p1, p2: m.p2 };
     const txt = `Ισορροπία: 1 ${fmtPct(m.p1)} vs 2 ${fmtPct(m.p2)} (διαφορά ${fmtPct(d)})`;
     if (level === PASS) passes.push(txt + ', ισορροπημένο ζευγάρι');
-    else cuts.push(txt + (level === PARTIAL ? ', ελαφρύ φαβορί' : ', έντονο φαβορί'));
+    else (level === PARTIAL ? partials : cuts).push(txt + (level === PARTIAL ? ', ελαφρύ φαβορί' : ', έντονο φαβορί'));
   }
 
   // 4. Under 2.5
@@ -135,7 +135,7 @@ export function evaluateMatch(fixture, results, settings = DEFAULT_SETTINGS) {
     crit.under = { level, value: u.under };
     const txt = `No-vig Under 2.5 ${fmtPct(u.under)}`;
     if (level === PASS) passes.push(txt + ', κλειστό ματς χαμηλού σκορ');
-    else cuts.push(txt + (level === PARTIAL ? ', ουδέτερο προφίλ γκολ' : ', ανοιχτό ματς με γκολ'));
+    else (level === PARTIAL ? partials : cuts).push(txt + (level === PARTIAL ? ', ουδέτερο προφίλ γκολ' : ', ανοιχτό ματς με γκολ'));
   }
 
   // 5. P_est & EV
@@ -159,11 +159,11 @@ export function evaluateMatch(fixture, results, settings = DEFAULT_SETTINGS) {
     } else {
       const level = ev >= s.evGood ? PASS : ev >= s.evMin ? PARTIAL : FAIL;
       crit.ev = { level, value: ev, pEst, breakEven, note: pEstNote };
-      (level === PASS ? passes : cuts).push(txt + (level === PASS ? ', θετικό' : level === PARTIAL ? ', οριακό' : ', αρνητικό'));
+      (level === PASS ? passes : level === PARTIAL ? partials : cuts).push(txt + (level === PASS ? ', θετικό' : level === PARTIAL ? ', οριακό' : ', αρνητικό'));
     }
   } else crit.ev = { level: UNKNOWN, value: null };
 
-  return { signal: classify(crit), crit, passes, cuts, pending, noVig: m, underNoVig: u };
+  return { signal: classify(crit), crit, passes, partials, cuts, pending, noVig: m, underNoVig: u };
 }
 
 /** Τριβάθμια κλίμακα. */
